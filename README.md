@@ -27,11 +27,23 @@
 * **Graph Engine**: Native SVG Force Simulation
 * **Transpiler**: Babel Standalone
 
-## 🚀 Quick Local Setup
+🚀 Quick Local Setup
 
 Since Episteme Workstation is self-contained in a single file, running it locally requires no installation:
 
-1. Clone or download this repository:
-   
-```bash
-   git clone [https://github.com/Ambili-Jayan/episteme-workstation.git](https://github.com/Ambili-Jayan/episteme-workstation.git)
+Clone or download this repository:
+
+git clone https://github.com/Ambili-Jayan/episteme-workstation.git
+
+
+Open index.html directly in any modern browser (Chrome, Edge, Firefox, Safari).
+
+Open the left sidebar, click Gemini API Key -> Setup, and paste your Google AI Studio API key.
+
+☁️ Deployment
+
+This project is ready to deploy live on Vercel.
+
+📜 License
+
+Distributed under the MIT License. See LICENSE for more information.
