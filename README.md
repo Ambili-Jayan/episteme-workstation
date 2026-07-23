@@ -43,6 +43,8 @@ Open the left sidebar, click Gemini API Key -> Setup, and paste your Google AI S
 ☁️ Deployment
 
 This project is ready to deploy live on Vercel.
+episteme-workstation-git-main-ambili.vercel.app
+
 
 📜 License
 
