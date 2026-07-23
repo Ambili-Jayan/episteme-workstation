@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Episteme Research Workstation</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React 18 & ReactDOM CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  
+  <!-- Babel Standalone CDN -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <!-- Custom CSS for animations and layout utilities -->
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up {
+      animation: fadeInUp 0.25s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+    .scrollbar-none::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-none {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 font-sans antialiased m-0 p-0 overflow-hidden">
+
+  <!-- Root mount container for React -->
+  <div id="root"></div>
+
+  <!-- Main Application Script -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    const Icons = {
+      BrandLogo: () => {
+        const [imgFailed, setImgFailed] = useState(false);
+        return imgFailed ? (
+          <svg 
+            className="w-11 h-11 rounded-full border border-slate-200/80 shadow-sm bg-[#111222] p-0.5 select-none pointer-events-none transition hover:scale-105 duration-200" 
+            viewBox="0 0 100 100" 
+            fill="none"
+          >
+            <defs>
+              <filter id="purpleGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <rect width="100" height="100" fill="#0c0d1b" />
+            
+            <path 
+              d="M 78,22 A 40,40 0 1,0 78,78" 
+              stroke="#ffffff" 
+              strokeWidth="2.8" 
+              fill="none" 
+              strokeLinecap="round" 
+            />
+            
+            <path 
+              d="M 16,50 C 30,50 35,22 78,22" 
+              stroke="#ffffff" 
+              strokeWidth="4.5" 
+              fill="none" 
+              strokeLinecap="round" 
+            />
+            <path 
+              d="M 16,50 C 30,50 35,78 78,78" 
+              stroke="#ffffff" 
+              strokeWidth="4.5" 
+              fill="none" 
+              strokeLinecap="round" 
+            />
+            
+            <path d="M 16,50 L 48,50 M 48,50 L 78,50" stroke="#ffffff" strokeWidth="3.5" fill="none" />
+            <path d="M 48,50 L 78,22" stroke="#ffffff" strokeWidth="1.8" fill="none" />
+            <path d="M 48,50 L 78,78" stroke="#ffffff" strokeWidth="1.8" fill="none" />
+            
+            <circle cx="16" cy="50" r="5" fill="#f1f5f9" stroke="#7c3aed" strokeWidth="2" />
+            <circle cx="48" cy="50" r="4.5" fill="#ffffff" stroke="#7c3aed" strokeWidth="1.5" />
+            <circle cx="78" cy="22" r="4.5" fill="#f1f5f9" stroke="#7c3aed" strokeWidth="2" />
+            <circle cx="78" cy="50" r="4.5" fill="#f1f5f9" stroke="#7c3aed" strokeWidth="2" />
+            <circle cx="78" cy="78" r="4.5" fill="#f1f5f9" stroke="#7c3aed" strokeWidth="2" />
+            
+            <circle cx="16" cy="50" r="8" stroke="#8b5cf6" strokeWidth="1.2" strokeOpacity="0.8" fill="none" filter="url(#purpleGlow)" />
+            <circle cx="78" cy="22" r="7.5" stroke="#8b5cf6" strokeWidth="1.2" strokeOpacity="0.8" fill="none" filter="url(#purpleGlow)" />
+            <circle cx="78" cy="78" r="7.5" stroke="#8b5cf6" strokeWidth="1.2" strokeOpacity="0.8" fill="none" filter="url(#purpleGlow)" />
+          </svg>
+        ) : (
+          <img 
+            src="ep.jpg" 
+            alt="Episteme Brand Logo" 
+            onError={() => setImgFailed(true)}
+            className="w-11 h-11 rounded-full object-cover border border-slate-200/80 shadow-sm transition hover:scale-105 duration-200 select-none pointer-events-none"
+          />
+        );
+      },
+      Sparkles: () => (
+        <svg className="w-4 h-4 animate-pulse text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      ),
+      Upload: () => (
+        <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+      ),
+      Document: () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      Graph: () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+        </svg>
+      ),
+      Notebook: () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      ),
+      ChevronLeft: () => (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      ),
+      ChevronRight: () => (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      ),
+      Close: () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      ),
+      Spinner: () => (
+        <svg className="animate-spin h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      ),
+      Trash: () => (
+        <svg className="w-4 h-4 text-slate-400 hover:text-rose-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      ),
+      Search: () => (
+        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      ),
+      ChevronDown: () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      ),
+      ChevronUp: () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+        </svg>
+      )
+    };
+
+    const sampleDocuments = [
+      {
+        id: "sample-banner-deck",
+        name: "Banner Deck: Episteme Paradigm.pdf",
+        pages: [
+          {
+            pageNumber: 1,
+            content: "EPISTEME PARADIGM PLATFORM DECK (v4.5)\n\nWelcome to Episteme: \"Principled browser-native research.\"\nThis platform establishes dedicated multi-document parsing vectors on the client. Direct vector ingestion guarantees real-time contextual awareness.\n\nCore Engineering Objectives:\n1. Non-blocking client-side index compilation\n2. Real-time topology creation (Knowledge Graphs)\n3. Pure offline-first state mapping"
+          },
+          {
+            pageNumber: 2,
+            content: "TECHNICAL BLUEPRINT (Page 2)\n\nData pipelines:\n- Client Ingest: PDF.js string array tokenizer\n- Context targeting: Multi-document check alignment\n- Render Core: Interactive force-directed topological engine\n\nBy binding documents directly to client session states, EPST LLM achieves extremely detailed document grounding and references direct page numbers during chat loops."
+          },
+          {
+            pageNumber: 3,
+            content: "VISION & MILESTONES (Page 3)\n\nWe democratize information structure. By coupling the Gemini 2.5 Flash schema framework with spring-directed SVG physical coordinate graphs, research connections appear natively.\n\nRoadmap Goals:\n- Real-time node creation from selections\n- Cross-document similarity highlighting\n- Persistent markdown export portfolios"
+          }
+        ]
+      },
+      {
+        id: "sample-academic-kg",
+        name: "Scientific Paper: Knowledge Graphs in LLMs.pdf",
+        pages: [
+          {
+            pageNumber: 1,
+            content: "KNOWLEDGE GRAPH CONTEXTUALIZATION IN TRANSFERS\n\nAbstract:\nWe present an evaluation of structured entity graphs for context augmentations in Generative Models. By converting flat texts into multidirectional nodes and relationships, semantic lookup times drop while contextual relevance increases.\n\nBackground:\nTraditional retrieval suffers from window-size limitations. Knowledge Graphs (KG) preserve the semantic proximity of disparate elements directly."
+          },
+          {
+            pageNumber: 2,
+            content: "METHODOLOGY (Page 2)\n\nLet the graph be G = (V, E) where V is the set of vertices (entities) and E is the set of edges (relations).\nOur transformer pipeline digests the string chunks, evaluates high-density entity connections, and constructs a live, responsive topology.\n\nVisualizer Specs:\nWe use a dynamic spring-system embedder that balances attraction (Hooke's Law) and repulsion (Coulomb's Law) in a fluid animation container."
+          }
+        ]
+      }
+    ];
+
+    function App() {
+      const [documents, setDocuments] = useState(sampleDocuments);
+      const [activeDocId, setActiveDocId] = useState("sample-banner-deck");
+      const [currentPage, setCurrentPage] = useState(1);
+      const [activeTab, setActiveTab] = useState("reader");
+      const [searchQuery, setSearchQuery] = useState("");
+      
+      const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+      
+      const [apiKey, setApiKey] = useState(() => localStorage.getItem("gemini_api_key") || "");
+      const [showKeyInput, setShowKeyInput] = useState(false);
+
+      const [selectedDocIds, setSelectedDocIds] = useState(() => ["sample-banner-deck", "sample-academic-kg"]);
+
+      const [isChatOpen, setIsChatOpen] = useState(false);
+      const [chatScope, setChatScope] = useState("selected_docs");
+
+      const [researchNotes, setResearchNotes] = useState(
+        "# Episteme Research Workspace\n\nRecord findings here. Select text in the Document Reader and click the float badge to capture instant annotations."
+      );
+
+      const [toastMessage, setToastMessage] = useState(null);
+      const showToast = (text, type = "info") => {
+        setToastMessage({ text, type });
+        setTimeout(() => setToastMessage(null), 4000);
+      };
+
+      const [pdfjsLoaded, setPdfjsLoaded] = useState(false);
+      const [isParsing, setIsParsing] = useState(false);
+
+      const activeDoc = useMemo(() => {
+        return documents.find(d => d.id === activeDocId) || documents[0];
+      }, [documents, activeDocId]);
+
+      useEffect(() => {
+        setCurrentPage(1);
+      }, [activeDocId]);
+
+      useEffect(() => {
+        if (window.pdfjsLib) {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+          setPdfjsLoaded(true);
+        } else {
+          const script = document.createElement("script");
+          script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
+          script.async = true;
+          script.onload = () => {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+            setPdfjsLoaded(true);
+          };
+          script.onerror = () => {
+            showToast("Could not load local PDF parser. Falling back to structured simulator.", "error");
+          };
+          document.body.appendChild(script);
+          return () => {
+            if (document.body.contains(script)) {
+              document.body.removeChild(script);
+            }
+          };
+        }
+      }, []);
+
+      const handlePdfUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith(".pdf")) {
+          showToast("Please supply a valid PDF format to Episteme Workspace.", "error");
+          return;
+        }
+
+        if (!pdfjsLoaded || !window.pdfjsLib) {
+          showToast("PDF engine is initializing, retry in a moment.", "info");
+          return;
+        }
+
+        setIsParsing(true);
+        showToast(`Ingesting raw PDF vectors: "${file.name}"`, "info");
+
+        try {
+          const fileReader = new FileReader();
+          fileReader.onload = async function () {
+            try {
+              const typedarray = new Uint8Array(this.result);
+              const pdf = await window.pdfjsLib.getDocument({ data: typedarray }).promise;
+              const numPages = pdf.numPages;
+              const parsedPages = [];
+
+              for (let i = 1; i <= numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const textStr = textContent.items.map(item => item.str).join(" ");
+                parsedPages.push({
+                  pageNumber: i,
+                  content: textStr || `[No printable characters mapped on page ${i}]`
+                });
+              }
+
+              const newDoc = {
+                id: `doc-${Date.now()}`,
+                name: file.name,
+                pages: parsedPages
+              };
+
+              setDocuments(prev => [newDoc, ...prev]);
+              setActiveDocId(newDoc.id);
+              setSelectedDocIds(prev => [...prev, newDoc.id]);
+              setIsParsing(false);
+              showToast(`Ingested ${numPages} pages successfully!`, "success");
+            } catch (err) {
+              console.error(err);
+              setIsParsing(false);
+              showToast("Failed to parse structural PDF text.", "error");
+            }
+          };
+          fileReader.readAsArrayBuffer(file);
+        } catch (err) {
+          console.error(err);
+          setIsParsing(false);
+          showToast("Stream loading failed.", "error");
+        }
+      };
+
+      const toggleDocSelection = (docId, e) => {
+        e.stopPropagation();
+        setSelectedDocIds(prev => {
+          if (prev.includes(docId)) {
+            return prev.filter(id => id !== docId);
+          } else {
+            return [...prev, docId];
+          }
+        });
+      };
+
+      const toggleAllDocs = () => {
+        if (selectedDocIds.length === documents.length) {
+          setSelectedDocIds([]);
+        } else {
+          setSelectedDocIds(documents.map(d => d.id));
+        }
+      };
+
+      const deleteDoc = (docId, e) => {
+        e.stopPropagation();
+        if (documents.length <= 1) {
+          showToast("Workspace must maintain at least one indexed reference document.", "info");
+          return;
+        }
+        const filtered = documents.filter(d => d.id !== docId);
+        setDocuments(filtered);
+        setSelectedDocIds(prev => prev.filter(id => id !== docId));
+        if (activeDocId === docId) {
+          setActiveDocId(filtered[0].id);
+        }
+        showToast("Document removed.", "success");
+      };
+
+      const [messages, setMessages] = useState([
+        {
+          role: "assistant",
+          text: "Greetings. I am EPST LLM. I can dynamically synthesize responses across all your checked documents, or toggle to answer generic scientific inquiries agentically. How may I assist your research today?",
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+      const [inputValue, setInputValue] = useState("");
+      const [isGenerating, setIsGenerating] = useState(false);
+      const chatBottomRef = useRef(null);
+
+      useEffect(() => {
+        chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [messages]);
+
+      const fetchWithBackoff = async (url, options, retries = 5, delay = 1000) => {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
+          return await response.json();
+        } catch (error) {
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithBackoff(url, options, retries - 1, delay * 2);
+          }
+          throw error;
+        }
+      };
+
+      const sendMessage = async () => {
+        if (!inputValue.trim() || isGenerating) return;
+
+        if (!apiKey) {
+          showToast("Please enter your Gemini API Key in the left sidebar first.", "error");
+          return;
+        }
+
+        const userText = inputValue;
+        setInputValue("");
+        
+        const updatedMessages = [
+          ...messages,
+          {
+            role: "user",
+            text: userText,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ];
+        setMessages(updatedMessages);
+        setIsGenerating(true);
+
+        let contextPayload = "";
+        const selectedDocuments = documents.filter(d => selectedDocIds.includes(d.id));
+
+        if (chatScope === "page") {
+          contextPayload = `[ACTIVE PAGE SCOPE ONLY - Page ${currentPage} of document "${activeDoc.name}"]\n${activeDoc.pages[currentPage - 1]?.content || ""}`;
+        } else {
+          if (selectedDocuments.length === 0) {
+            contextPayload = "[No documents checked/selected. Operating exclusively in General Agentic Knowledge Mode.]";
+          } else {
+            contextPayload = selectedDocuments.map(doc => {
+              const pagesText = doc.pages.map(p => `[PAGE ${p.pageNumber}]\n${p.content}`).join("\n\n");
+              return `[DOCUMENT REFERENCE: ${doc.name}]\n${pagesText}`;
+            }).join("\n\n============\n\n");
+          }
+        }
+        
+        const systemPrompt = `You are "EPST LLM", an advanced scientific research assistant and intelligence agent built on top of the Episteme Research Workstation.
+
+ACTIVE SELECTED CONTEXT LAYERS (Only refer to these documents if query is related):
+-----------------------
+${contextPayload}
+-----------------------
+
+AGENTIC NATURE & INTELLIGENT ROUTING INSTRUCTIONS:
+1. Classification: Analyze if the user's question relates to the attached/selected documents above.
+2. Grounded Mode (Query is Related): If the question is related, answer using ONLY the attached layers. Be extremely specific. Quote where appropriate and reference precise pages and document names (e.g., "According to page 2 of Banner Deck...").
+3. Agentic/General Mode (Query is Generic or Unrelated): If the query is generic, unrelated to the attached PDFs, or requests help on general math, physics, coding, machine learning, or creative writing, DO NOT decline to answer. Use your complete pre-trained scientific database to provide an academically rigorous, highly structured, and helpful response. Prefix this type of general answer with: "[EPST LLM - General Knowledge Synthesis]" so the researcher knows the information is sourced from pre-trained agentic models rather than active workspace layers.
+4. Self-Identity: Always refer to yourself as "EPST LLM".`;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+        const payload = {
+          contents: [
+            { parts: [{ text: `User request: ${userText}` }] }
+          ],
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          }
+        };
+
+        try {
+          const data = await fetchWithBackoff(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "The engine failed to structure a reply. Please try again.";
+
+          setMessages(prev => [
+            ...prev,
+            {
+              role: "assistant",
+              text: responseText,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+          ]);
+        } catch (err) {
+          console.error(err);
+          setMessages(prev => [
+            ...prev,
+            {
+              role: "assistant",
+              text: "An error occurred during EPST LLM execution. Please check your credentials or API quota.",
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              isError: true
+            }
+          ]);
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+
+      const [graphNodes, setGraphNodes] = useState([]);
+      const [graphEdges, setGraphEdges] = useState([]);
+      const [isGeneratingGraph, setIsGeneratingGraph] = useState(false);
+      const [selectedNode, setSelectedNode] = useState(null);
+      const canvasRef = useRef(null);
+      const dragStartRef = useRef({ x: 0, y: 0 });
+
+      const [customNodeLabel, setCustomNodeLabel] = useState("");
+      const [customNodeType, setCustomNodeType] = useState("concept");
+      const [edgeSource, setEdgeSource] = useState("");
+      const [edgeTarget, setEdgeTarget] = useState("");
+      const [edgeRelation, setEdgeRelation] = useState("");
+
+      const defaultSampleGraph = {
+        "sample-banner-deck": {
+          nodes: [
+            { id: "episteme_paradigm", label: "Episteme Paradigm", type: "system", x: 150, y: 150, vx: 0, vy: 0 },
+            { id: "browser_ingestion", label: "Client-side Ingestion", type: "technology", x: 280, y: 100, vx: 0, vy: 0 },
+            { id: "epst_llm", label: "EPST LLM Engine", type: "ai", x: 350, y: 250, vx: 0, vy: 0 },
+            { id: "topology_maps", label: "Knowledge Graphs", type: "system", x: 100, y: 280, vx: 0, vy: 0 },
+            { id: "grounded_scope", label: "Grounded Page citers", type: "concept", x: 450, y: 150, vx: 0, vy: 0 }
+          ],
+          edges: [
+            { source: "episteme_paradigm", target: "browser_ingestion", relation: "implements" },
+            { source: "episteme_paradigm", target: "epst_llm", relation: "deploys" },
+            { source: "episteme_paradigm", target: "topology_maps", relation: "renders" },
+            { source: "browser_ingestion", target: "epst_llm", relation: "inputs contexts to" },
+            { source: "epst_llm", target: "grounded_scope", relation: "forces alignment of" },
+            { source: "topology_maps", target: "epst_llm", relation: "visually charts connections for" }
+          ]
+        },
+        "sample-academic-kg": {
+          nodes: [
+            { id: "knowledge_graphs", label: "Knowledge Graphs", type: "system", x: 120, y: 180, vx: 0, vy: 0 },
+            { id: "context_augmentations", label: "Context Augmentations", type: "technology", x: 280, y: 100, vx: 0, vy: 0 },
+            { id: "hallucination_reduction", label: "Hallucination Reduction", type: "concept", x: 400, y: 220, vx: 0, vy: 0 },
+            { id: "hooke_law", label: "Hooke's Spring Model", type: "technology", x: 250, y: 300, vx: 0, vy: 0 }
+          ],
+          edges: [
+            { source: "knowledge_graphs", target: "context_augmentations", relation: "optimizes lookup" },
+            { source: "context_augmentations", target: "hallucination_reduction", relation: "provides guarantee of" },
+            { source: "knowledge_graphs", target: "hooke_law", relation: "simulated mathematically via" }
+          ]
+        }
+      };
+
+      useEffect(() => {
+        const data = defaultSampleGraph[activeDocId] || { nodes: [], edges: [] };
+        const seededNodes = data.nodes.map(n => ({
+          ...n,
+          x: n.x || 100 + Math.random() * 300,
+          y: n.y || 100 + Math.random() * 200,
+          vx: 0,
+          vy: 0
+        }));
+        setGraphNodes(seededNodes);
+        setGraphEdges(data.edges || []);
+        setSelectedNode(null);
+      }, [activeDocId]);
+
+      useEffect(() => {
+        if (graphNodes.length === 0) return;
+
+        let frameId;
+        const tickSimulation = () => {
+          setGraphNodes(prevNodes => {
+            const nextNodes = prevNodes.map(n => ({ ...n }));
+            const width = 580;
+            const height = 400;
+            const center = { x: width / 2, y: height / 2 };
+
+            // Coulomb's repulsion
+            for (let i = 0; i < nextNodes.length; i++) {
+              const u = nextNodes[i];
+              for (let j = i + 1; j < nextNodes.length; j++) {
+                const v = nextNodes[j];
+                const dx = v.x - u.x || 0.1;
+                const dy = v.y - u.y || 0.1;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 180) {
+                  const force = (180 - dist) * 0.08;
+                  const fx = (dx / dist) * force;
+                  const fy = (dy / dist) * force;
+                  if (!u.isDragging) { u.vx -= fx; u.vy -= fy; }
+                  if (!v.isDragging) { v.vx += fx; v.vy += fy; }
+                }
+              }
+            }
+
+            // Hooke's edge attraction
+            graphEdges.forEach(edge => {
+              const s = nextNodes.find(n => n.id === edge.source);
+              const t = nextNodes.find(n => n.id === edge.target);
+              if (s && t) {
+                const dx = t.x - s.x;
+                const dy = t.y - s.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
+                const targetLength = 120;
+                const force = (dist - targetLength) * 0.03;
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+
+                if (!s.isDragging) { s.vx += fx; s.vy += fy; }
+                if (!t.isDragging) { t.vx -= fx; t.vy -= fy; }
+              }
+            });
+
+            // Center gravity & damping
+            nextNodes.forEach(n => {
+              if (n.isDragging) return;
+              n.vx += (center.x - n.x) * 0.008;
+              n.vy += (center.y - n.y) * 0.008;
+              n.vx *= 0.82;
+              n.vy *= 0.82;
+              n.x += n.vx;
+              n.y += n.vy;
+              n.x = Math.max(30, Math.min(width - 30, n.x));
+              n.y = Math.max(30, Math.min(height - 30, n.y));
+            });
+
+            return nextNodes;
+          });
+
+          frameId = requestAnimationFrame(tickSimulation);
+        };
+
+        frameId = requestAnimationFrame(tickSimulation);
+        return () => cancelAnimationFrame(frameId);
+      }, [graphEdges, graphNodes.length]);
+
+      const handleNodeMouseDown = (e, nodeId) => {
+        e.preventDefault();
+        dragStartRef.current = { x: e.clientX, y: e.clientY };
+        setGraphNodes(prev => prev.map(n => {
+          if (n.id === nodeId) return { ...n, isDragging: true };
+          return n;
+        }));
+      };
+
+      const handleMouseMove = (e) => {
+        const draggingNode = graphNodes.find(n => n.isDragging);
+        if (!draggingNode || !canvasRef.current) return;
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        setGraphNodes(prev => prev.map(n => {
+          if (n.isDragging) {
+            return { ...n, x: mouseX, y: mouseY, vx: 0, vy: 0 };
+          }
+          return n;
+        }));
+      };
+
+      const handleMouseUpOrLeave = () => {
+        setGraphNodes(prev => prev.map(n => ({ ...n, isDragging: false })));
+      };
+
+      const handleNodeClick = (node) => {
+        setSelectedNode(node);
+
+        const labelClean = node.label.toLowerCase();
+        const idClean = node.id.replace(/_/g, " ").toLowerCase();
+        
+        let matchedPage = 1;
+        let found = false;
+
+        for (const page of activeDoc.pages) {
+          const textClean = page.content.toLowerCase();
+          if (textClean.includes(labelClean) || textClean.includes(idClean)) {
+            matchedPage = page.pageNumber;
+            found = true;
+            break;
+          }
+        }
+
+        setCurrentPage(matchedPage);
+        setSearchQuery(node.label);
+        setActiveTab("reader");
+
+        if (found) {
+          showToast(`Redirected to Reader - Page ${matchedPage} highlighting "${node.label}"`, "success");
+        } else {
+          showToast(`Transitioned to Reader Panel view for "${node.label}"`, "info");
+        }
+      };
+
+      const extractKnowledgeGraph = async () => {
+        if (isGeneratingGraph) return;
+        if (!apiKey) {
+          showToast("Please input your Gemini API Key in the left sidebar configuration.", "error");
+          return;
+        }
+
+        setIsGeneratingGraph(true);
+        showToast("EPST LLM is compiling entity-relationship nodes...", "info");
+
+        const activePageContent = activeDoc.pages[currentPage - 1]?.content || "";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+        const systemPrompt = `You are "EPST LLM", a dynamic semantic analyzer.
+Extract key entities (nodes) and their interactions (edges) from the page text.
+Format your output strictly matching the supplied JSON Schema constraint. No markdown containers.`;
+
+        const userPrompt = `Extract key entity relationships from the following text of Page ${currentPage} of the active document:
+-------------------------
+${activePageContent}
+-------------------------`;
+
+        const responseSchemaDefinition = {
+          type: "OBJECT",
+          properties: {
+            nodes: {
+              type: "ARRAY",
+              description: "Extracted entities in the document text. Keep the count to maximum 8 highly important entities for readability.",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  id: { type: "STRING", description: "A simple unique snake_case string id of the concept" },
+                  label: { type: "STRING", description: "Human-readable short label, e.g., 'Transformer Network'" },
+                  nodeType: { type: "STRING", description: "Brief classification type, e.g., 'concept', 'system', 'technology', 'organization'" }
+                },
+                required: ["id", "label", "nodeType"]
+              }
+            },
+            edges: {
+              type: "ARRAY",
+              description: "Direct relations between extracted entity nodes.",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  source: { type: "STRING", description: "The snake_case id of the source node" },
+                  target: { type: "STRING", description: "The snake_case id of the target node" },
+                  relation: { type: "STRING", description: "Active verb describing the relation, e.g., 'enhances', 'reduces'" }
+                },
+                required: ["source", "target", "relation"]
+              }
+            }
+          },
+          required: ["nodes", "edges"]
+        };
+
+        const payload = {
+          contents: [
+            { parts: [{ text: userPrompt }] }
+          ],
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          },
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: responseSchemaDefinition
+          }
+        };
+
+        try {
+          const response = await fetchWithBackoff(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          const resultText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!resultText) throw new Error("No structured text response returned by the API.");
+
+          const cleanJson = JSON.parse(resultText);
+
+          if (cleanJson.nodes && Array.isArray(cleanJson.nodes)) {
+            const mappedNodes = cleanJson.nodes.map(node => ({
+              ...node,
+              type: node.nodeType || node.type || "concept",
+              x: 100 + Math.random() * 380,
+              y: 100 + Math.random() * 240,
+              vx: 0,
+              vy: 0
+            }));
+
+            setGraphNodes(mappedNodes);
+            setGraphEdges(cleanJson.edges || []);
+            setSelectedNode(null);
+            showToast("Extracted new custom semantic topology map!", "success");
+          }
+        } catch (err) {
+          console.error(err);
+          showToast("Dynamic parsing error. Reverted to baseline sample graph.", "error");
+        } finally {
+          setIsGeneratingGraph(false);
+        }
+      };
+
+      const addCustomNode = (e) => {
+        e.preventDefault();
+        if (!customNodeLabel.trim()) return;
+
+        const generatedId = customNodeLabel.toLowerCase().trim().replace(/[^a-z0-9]/g, "_");
+        if (graphNodes.some(n => n.id === generatedId)) {
+          showToast("An entity node with this semantic tag already exists.", "info");
+          return;
+        }
+
+        const newNode = {
+          id: generatedId,
+          label: customNodeLabel.trim(),
+          type: customNodeType,
+          x: 150 + Math.random() * 200,
+          y: 150 + Math.random() * 150,
+          vx: 0,
+          vy: 0
+        };
+
+        setGraphNodes(prev => [...prev, newNode]);
+        setCustomNodeLabel("");
+        showToast(`Added custom node "${newNode.label}"`, "success");
+      };
+
+      const addCustomEdge = (e) => {
+        e.preventDefault();
+        if (!edgeSource || !edgeTarget || !edgeRelation.trim()) {
+          showToast("Select source node, target node, and define their relation link.", "error");
+          return;
+        }
+
+        if (edgeSource === edgeTarget) {
+          showToast("Cannot establish a recursive relationship on the same node.", "info");
+          return;
+        }
+
+        const newEdge = {
+          source: edgeSource,
+          target: edgeTarget,
+          relation: edgeRelation.trim()
+        };
+
+        setGraphEdges(prev => [...prev, newEdge]);
+        setEdgeRelation("");
+        showToast("Added relationship connection.", "success");
+      };
+
+      const deleteSelectedNode = () => {
+        if (!selectedNode) return;
+        setGraphNodes(prev => prev.filter(n => n.id !== selectedNode.id));
+        setGraphEdges(prev => prev.filter(edge => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
+        showToast(`Pruned node "${selectedNode.label}" and its respective relation links.`, "success");
+        setSelectedNode(null);
+      };
+
+      const [selectedText, setSelectedText] = useState("");
+      const [textSelectionCoords, setTextSelectionCoords] = useState(null);
+
+      const handleTextSelection = () => {
+        const selection = window.getSelection();
+        const text = selection.toString().trim();
+        if (text.length > 5) {
+          setSelectedText(text);
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          setTextSelectionCoords({
+            top: rect.top + window.scrollY - 34,
+            left: rect.left + window.scrollX + (rect.width / 2) - 50
+          });
+        } else {
+          setSelectedText("");
+          setTextSelectionCoords(null);
+        }
+      };
+
+      const clipSelectionToNotes = () => {
+        if (!selectedText) return;
+        const cleanQuote = `\n\n> "${selectedText}"\n> — *Clipped from Page ${currentPage} of "${activeDoc.name}"*\n\n`;
+        setResearchNotes(prev => prev + cleanQuote);
+        setSelectedText("");
+        setTextSelectionCoords(null);
+        window.getSelection().removeAllRanges();
+        showToast("Copied citation directly to research markdown notepad!", "success");
+      };
+
+      const downloadNotesAsFile = () => {
+        const element = document.createElement("a");
+        const file = new Blob([researchNotes], { type: 'text/markdown' });
+        element.href = URL.createObjectURL(file);
+        element.download = `${activeDoc.name.replace(/\.pdf$/i, '')}_notes.md`;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+      };
+
+      const renderHighlightedContent = (text) => {
+        if (!searchQuery.trim()) return <span className="whitespace-pre-line text-slate-700 font-serif leading-relaxed text-sm select-text">{text}</span>;
+
+        const regex = new RegExp(`(${searchQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+        const parts = text.split(regex);
+
+        return (
+          <span className="whitespace-pre-line text-slate-700 font-serif leading-relaxed text-sm select-text" onMouseUp={handleTextSelection}>
+            {parts.map((part, i) => 
+              regex.test(part) ? (
+                <mark key={i} className="bg-amber-100 text-slate-900 font-semibold px-0.5 border-b-2 border-indigo-500 rounded">
+                  {part}
+                </mark>
+              ) : (
+                part
+              )
+            )}
+          </span>
+        );
+      };
+
+      return (
+        <div className="flex flex-col lg:flex-row h-screen w-full bg-[#f8fafc] text-slate-800 font-sans select-none overflow-hidden antialiased relative">
+          
+          {toastMessage && (
+            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
+              <div className={`px-5 py-3 rounded-full border text-xs tracking-wide shadow-xl backdrop-blur-md flex items-center gap-3 ${
+                toastMessage.type === 'error' ? 'bg-rose-50 text-rose-950 border-rose-200' :
+                toastMessage.type === 'success' ? 'bg-emerald-50 text-emerald-950 border-emerald-200' :
+                'bg-white text-slate-800 border-slate-200 shadow-sm'
+              }`}>
+                <span className="h-2 w-2 rounded-full bg-indigo-600 animate-ping"></span>
+                <span>{toastMessage.text}</span>
+              </div>
+            </div>
+          )}
+
+          <header className="lg:hidden h-16 border-b border-slate-200 bg-white flex items-center justify-between px-4 shrink-0 z-30">
+            <div className="flex items-center gap-3">
+              <Icons.BrandLogo />
+              <div>
+                <h1 className="text-xs font-bold tracking-tight text-slate-900 leading-none">Episteme</h1>
+                <span className="text-[9px] text-slate-500 font-mono">EPST LLM Active</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-950 transition"
+              title="Toggle reference files panel"
+            >
+              <span className="sr-only">Menu</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </header>
+
+          <aside className={`
+            fixed lg:static inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 h-full transition-transform duration-300 ease-in-out lg:translate-x-0
+            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}>
+            <div>
+              <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Icons.BrandLogo />
+                  <div className="flex flex-col">
+                    <h1 className="text-sm font-bold tracking-tight text-slate-900 leading-none">Episteme</h1>
+                    <p className="text-[10px] text-slate-500 font-mono font-bold leading-tight mt-0.5">Research Workstation</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden p-1 rounded hover:bg-slate-100 text-slate-600"
+                >
+                  <Icons.Close />
+                </button>
+              </div>
+
+              <div className="px-6 py-2.5 bg-slate-50 border-b border-slate-200/60">
+                <p className="text-[10px] text-slate-600 italic font-mono leading-relaxed">
+                  "Principled browser-native research."
+                </p>
+              </div>
+
+              <div className="p-4">
+                <label className="flex flex-col items-center justify-center w-full h-24 border border-dashed border-slate-200 rounded-lg hover:border-indigo-500/40 cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition duration-150 ease-in-out">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                    <Icons.Upload />
+                    <p className="mt-1.5 text-xs font-medium text-slate-800">Ingest Local PDF</p>
+                    <p className="text-[9px] text-slate-500 font-mono mt-0.5">Browser client-side parsing</p>
+                  </div>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="application/pdf" 
+                    onChange={handlePdfUpload}
+                    disabled={isParsing}
+                  />
+                </label>
+              </div>
+
+              <div className="px-4 py-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-[10px] font-semibold text-slate-400 tracking-wider uppercase font-mono">WORKSPACE DOCS</h3>
+                  <button 
+                    onClick={toggleAllDocs}
+                    className="text-[9px] text-indigo-600 hover:text-indigo-800 font-mono font-bold cursor-pointer"
+                  >
+                    {selectedDocIds.length === documents.length ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500 mb-3 leading-snug">
+                  Check boxes to include documents in <span className="font-semibold text-indigo-600">EPST LLM</span> active search scope. Click doc to open in reader.
+                </p>
+                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                  {documents.map((doc) => {
+                    const isActive = doc.id === activeDocId;
+                    const isChecked = selectedDocIds.includes(doc.id);
+                    return (
+                      <div
+                        key={doc.id}
+                        onClick={() => {
+                          setActiveDocId(doc.id);
+                          setIsSidebarOpen(false);
+                        }}
+                        className={`group w-full flex items-center justify-between px-3 py-2.5 rounded-md cursor-pointer transition text-xs border ${
+                          isActive 
+                            ? "bg-indigo-50/60 text-indigo-950 border-indigo-100 shadow-sm" 
+                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 truncate pr-2">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => toggleDocSelection(doc.id, e)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            title="Include in AI Context Scope"
+                          />
+                          <Icons.Document />
+                          <span className="truncate font-medium">{doc.name}</span>
+                        </div>
+                        <button 
+                          onClick={(e) => deleteDoc(doc.id, e)}
+                          className="opacity-0 group-hover:opacity-100 transition p-0.5 rounded hover:bg-slate-200"
+                          title="Unload reference document"
+                        >
+                          <Icons.Trash />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-4 py-3 mx-4 mb-2 rounded-lg bg-slate-50 border border-slate-200">
+              <button 
+                onClick={() => setShowKeyInput(!showKeyInput)}
+                className="w-full flex items-center justify-between text-[11px] font-mono text-slate-600 hover:text-slate-900 transition"
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className={`h-1.5 w-1.5 rounded-full ${apiKey ? 'bg-emerald-500' : 'bg-rose-500 animate-pulse'}`}></span>
+                  Gemini API Key
+                </span>
+                <span>{showKeyInput ? "Hide" : "Setup"}</span>
+              </button>
+              
+              {(showKeyInput || !apiKey) && (
+                <div className="mt-2.5 space-y-2 animate-fade-in">
+                  <input
+                    type="password"
+                    placeholder="Enter Gemini API Key..."
+                    value={apiKey}
+                    onChange={(e) => {
+                      const key = e.target.value.trim();
+                      setApiKey(key);
+                      localStorage.setItem("gemini_api_key", key);
+                    }}
+                    className="w-full bg-white text-[10px] font-mono text-slate-800 placeholder-slate-400 px-2 py-1.5 rounded border border-slate-200 focus:outline-none focus:border-indigo-500"
+                  />
+                  <p className="text-[9px] text-slate-500 leading-normal font-mono">
+                    Get a free key from Google AI Studio. Stored securely inside local cache.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-200 bg-slate-50">
+              <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                <span>PDF Engine:</span>
+                <span className={pdfjsLoaded ? "text-emerald-600 font-bold" : "text-amber-600 animate-pulse"}>
+                  {pdfjsLoaded ? "Ready" : "Loading..."}
+                </span>
+              </div>
+              <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                <span>Agent:</span>
+                <span className="text-indigo-600 font-bold">EPST LLM v2.5</span>
+              </div>
+            </div>
+          </aside>
+
+          <main className="flex-1 flex flex-col bg-slate-50 overflow-hidden relative">
+            <header className="h-16 border-b border-slate-200/80 bg-white flex items-center justify-between px-6 shrink-0 z-10 shadow-sm">
+              <div className="flex items-center gap-4">
+                <h2 className="text-xs font-bold text-slate-900 tracking-tight truncate max-w-[180px] hidden sm:block">
+                  {activeDoc.name}
+                </h2>
+                
+                <div className="flex bg-slate-100 rounded-lg p-1 border border-slate-200/60 shadow-inner">
+                  <button
+                    onClick={() => setActiveTab("reader")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                      activeTab === "reader" ? "bg-white text-indigo-950 shadow-sm font-semibold" : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <Icons.Document />
+                    Reader
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("graph")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                      activeTab === "graph" ? "bg-white text-indigo-950 shadow-sm font-semibold" : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <Icons.Graph />
+                    Knowledge Graph
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("notes")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                      activeTab === "notes" ? "bg-white text-indigo-950 shadow-sm font-semibold" : "text-slate-500 hover:text-slate-800"
+                    }`}
+                  >
+                    <Icons.Notebook />
+                    Notes
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {activeTab === "reader" && (
+                  <div className="relative hidden md:block">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                      <Icons.Search />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Find on page..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-slate-50 text-xs text-slate-850 placeholder-slate-400 pl-9 pr-8 py-1.5 rounded-md border border-slate-200 focus:outline-none focus:border-indigo-500/50 transition w-36 focus:w-44"
+                    />
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+                      >
+                        <Icons.Close />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center bg-slate-100 rounded-md border border-slate-200/60 p-0.5">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1 hover:bg-white text-slate-600 disabled:opacity-30 disabled:hover:bg-transparent rounded-md transition"
+                    title="Previous page"
+                  >
+                    <Icons.ChevronLeft />
+                  </button>
+                  <span className="px-2.5 text-xs font-mono font-bold text-slate-700">
+                    {currentPage} <span className="text-slate-400">/</span> {activeDoc.pages.length}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(activeDoc.pages.length, prev + 1))}
+                    disabled={currentPage === activeDoc.pages.length}
+                    className="p-1 hover:bg-white text-slate-600 disabled:opacity-30 disabled:hover:bg-transparent rounded-md transition"
+                    title="Next page"
+                  >
+                    <Icons.ChevronRight />
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            {textSelectionCoords && activeTab === "reader" && (
+              <button
+                style={{ top: `${textSelectionCoords.top}px`, left: `${textSelectionCoords.left}px` }}
+                onClick={clipSelectionToNotes}
+                className="absolute z-30 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md shadow-xl text-xs font-semibold tracking-wide flex items-center gap-1 animate-fade-in-up border border-indigo-400"
+              >
+                <Icons.Sparkles />
+                Clip to Notes
+              </button>
+            )}
+
+            <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center items-start">
+              
+              {activeTab === "reader" && (
+                <div className="w-full max-w-2xl bg-white rounded-xl border border-slate-200 shadow-md p-6 md:p-10 flex flex-col justify-between min-h-[500px]">
+                  <div>
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
+                      <button 
+                        onClick={() => setActiveTab("graph")}
+                        className="group text-[10px] font-mono tracking-wider text-indigo-600 hover:text-indigo-800 font-bold uppercase flex items-center gap-1 transition"
+                      >
+                        <span className="group-hover:-translate-x-0.5 transition-transform">←</span> BACK TO KNOWLEDGE GRAPH
+                      </button>
+                      <span className="text-xs text-slate-400 font-mono font-semibold">Page {currentPage} of {activeDoc.pages.length}</span>
+                    </div>
+                    
+                    <div className="prose prose-slate max-w-none">
+                      {renderHighlightedContent(activeDoc.pages[currentPage - 1]?.content || "")}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-4 mt-12 flex justify-between items-center text-[10px] text-slate-400 font-mono font-semibold">
+                    <span>INDEX_UID: {activeDoc.id}</span>
+                    <span className="text-slate-300">Client Sandbox Parsing Secure</span>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "graph" && (
+                <div className="w-full max-w-4xl flex flex-col xl:flex-row h-full gap-5">
+                  
+                  <div className="flex-1 flex flex-col gap-4">
+                    <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-900">Adaptive Topological Relations Map</h3>
+                        <p className="text-[10px] text-slate-500 leading-normal mt-0.5">
+                          Current Focus: <span className="font-semibold text-indigo-600">Page {currentPage}</span>. Click any concept node to navigate to the exact source context in the reader layout.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={extractKnowledgeGraph}
+                        disabled={isGeneratingGraph}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-900 text-xs font-semibold text-white rounded-lg transition shadow-md shadow-indigo-600/10 cursor-pointer self-stretch sm:self-auto justify-center"
+                      >
+                        {isGeneratingGraph ? <Icons.Spinner /> : <Icons.Sparkles />}
+                        {isGeneratingGraph ? "Extracting..." : "EPST LLM Auto-Extract"}
+                      </button>
+                    </div>
+
+                    <div className="flex-1 bg-white rounded-xl border border-slate-200 relative overflow-hidden min-h-[360px] shadow-sm">
+                      <svg
+                        ref={canvasRef}
+                        className="w-full h-full cursor-grab active:cursor-grabbing"
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUpOrLeave}
+                        onMouseLeave={handleMouseUpOrLeave}
+                      >
+                        <defs>
+                          <marker id="arrow" viewBox="0 0 10 10" refX="16" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="#cbd5e1" />
+                          </marker>
+                        </defs>
+
+                        {graphEdges.map((edge, idx) => {
+                          const sNode = graphNodes.find(n => n.id === edge.source);
+                          const tNode = graphNodes.find(n => n.id === edge.target);
+                          if (!sNode || !tNode) return null;
+
+                          const midX = (sNode.x + tNode.x) / 2;
+                          const midY = (sNode.y + tNode.y) / 2;
+
+                          return (
+                            <g key={`edge-${idx}`} className="transition duration-150">
+                              <line
+                                x1={sNode.x}
+                                y1={sNode.y}
+                                x2={tNode.x}
+                                y2={tNode.y}
+                                stroke="#e2e8f0"
+                                strokeWidth="2"
+                                markerEnd="url(#arrow)"
+                              />
+                              <g transform={`translate(${midX}, ${midY})`}>
+                                <rect x="-40" y="-7" width="80" height="14" rx="3" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.5" />
+                                <text textAnchor="middle" dominantBaseline="central" fontSize="8" fontFamily="monospace" fill="#64748b" className="pointer-events-none select-none">
+                                  {edge.relation}
+                                </text>
+                              </g>
+                            </g>
+                          );
+                        })}
+
+                        {graphNodes.map((node) => {
+                          const isSelected = selectedNode?.id === node.id;
+                          const isSystem = node.type === "system";
+                          const isAi = node.type === "ai";
+                          const isTech = node.type === "technology";
+
+                          let colorClass = "fill-slate-50 stroke-slate-300 text-slate-600";
+                          if (isSystem) colorClass = "fill-indigo-50 stroke-indigo-400 text-indigo-700";
+                          if (isAi) colorClass = "fill-fuchsia-50 stroke-fuchsia-400 text-fuchsia-700";
+                          if (isTech) colorClass = "fill-emerald-50 stroke-emerald-400 text-emerald-700";
+
+                          return (
+                            <g
+                              key={node.id}
+                              transform={`translate(${node.x}, ${node.y})`}
+                              onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                              onClick={(e) => {
+                                const dx = Math.abs(e.clientX - dragStartRef.current.x);
+                                const dy = Math.abs(e.clientY - dragStartRef.current.y);
+                                if (dx < 6 && dy < 6) {
+                                  handleNodeClick(node);
+                                }
+                              }}
+                              className="cursor-pointer group"
+                            >
+                              <circle r="22" className="fill-transparent stroke-transparent group-hover:stroke-indigo-100 stroke-1 transition-all" />
+                              <circle r="15" className={`${colorClass} stroke-2 transition duration-150 ${isSelected ? 'ring-4 ring-indigo-500/10 stroke-indigo-600' : ''}`} />
+                              
+                              <text y="28" textAnchor="middle" fontSize="9" fontWeight="600" className="fill-slate-700 pointer-events-none select-none">
+                                {node.label}
+                              </text>
+                              <text textAnchor="middle" dominantBaseline="central" fontSize="8" fontFamily="monospace" className="fill-slate-500 pointer-events-none select-none">
+                                {node.type?.charAt(0).toUpperCase()}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </svg>
+
+                      {selectedNode && (
+                        <div className="absolute bottom-3 left-3 right-3 bg-white/95 border border-slate-200 rounded-lg p-3 text-xs shadow-md backdrop-blur-sm flex justify-between items-center animate-fade-in">
+                          <div>
+                            <span className="text-[8px] font-mono uppercase tracking-wider text-slate-400 font-bold">Selected Node Profile</span>
+                            <h4 className="font-bold text-slate-900 mt-0.5">{selectedNode.label}</h4>
+                            <p className="text-[10px] text-slate-500 mt-0.5">
+                              Classification: <span className="text-indigo-600 font-mono font-bold">{selectedNode.type}</span>
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={deleteSelectedNode}
+                              className="px-2.5 py-1 text-[10px] font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition"
+                            >
+                              Prune Node
+                            </button>
+                            <button
+                              onClick={() => setSelectedNode(null)}
+                              className="px-2.5 py-1 text-[10px] font-semibold bg-slate-100 hover:bg-slate-200 text-slate-600 rounded transition"
+                            >
+                              Deselect
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="w-full xl:w-64 flex flex-col gap-4 shrink-0">
+                    <form onSubmit={addCustomNode} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+                      <h4 className="text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">Insert custom Node</h4>
+                      
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-500 font-mono mb-1 uppercase">Node label / Title</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Transformer Layer"
+                          value={customNodeLabel}
+                          onChange={(e) => setCustomNodeLabel(e.target.value)}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-200 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-500 font-mono mb-1 uppercase">Node type classification</label>
+                        <select
+                          value={customNodeType}
+                          onChange={(e) => setCustomNodeType(e.target.value)}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-200 bg-slate-50 focus:outline-none"
+                        >
+                          <option value="concept">Concept</option>
+                          <option value="system">System</option>
+                          <option value="technology">Technology</option>
+                          <option value="ai">AI / LLM</option>
+                        </select>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded text-[10px] font-bold font-mono tracking-wide uppercase transition"
+                      >
+                        Insert Entity
+                      </button>
+                    </form>
+
+                    <form onSubmit={addCustomEdge} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+                      <h4 className="text-[10px] font-bold text-slate-400 tracking-wider uppercase font-mono">Establish relationship</h4>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-500 font-mono mb-1 uppercase">Source node</label>
+                        <select
+                          value={edgeSource}
+                          onChange={(e) => setEdgeSource(e.target.value)}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-200 bg-slate-50 focus:outline-none"
+                        >
+                          <option value="">Select source...</option>
+                          {graphNodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-500 font-mono mb-1 uppercase">Target node</label>
+                        <select
+                          value={edgeTarget}
+                          onChange={(e) => setEdgeTarget(e.target.value)}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-200 bg-slate-50 focus:outline-none"
+                        >
+                          <option value="">Select target...</option>
+                          {graphNodes.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-bold text-slate-500 font-mono mb-1 uppercase">Relation active verb</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. enhances, maps to"
+                          value={edgeRelation}
+                          onChange={(e) => setEdgeRelation(e.target.value)}
+                          className="w-full text-xs px-2.5 py-1.5 rounded border border-slate-200 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-bold font-mono tracking-wide uppercase transition shadow-sm shadow-indigo-600/10"
+                      >
+                        Link Entities
+                      </button>
+                    </form>
+
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "notes" && (
+                <div className="w-full max-w-3xl bg-white rounded-xl border border-slate-200 p-6 md:p-8 shadow-sm space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-2">
+                    <div>
+                      <h3 className="text-xs font-bold text-slate-900 uppercase font-mono">Workspace Annotation Scratchpad</h3>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Edit research findings, append citations, and export compile states.</p>
+                    </div>
+                    <button
+                      onClick={downloadNotesAsFile}
+                      className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-mono font-bold tracking-wide uppercase rounded-md transition shadow-md"
+                    >
+                      Export markdown (.md)
+                    </button>
+                  </div>
+
+                  <textarea
+                    value={researchNotes}
+                    onChange={(e) => setResearchNotes(e.target.value)}
+                    className="w-full h-96 p-4 bg-slate-50 rounded-lg border border-slate-200 font-mono text-xs text-slate-700 leading-relaxed focus:outline-none focus:bg-white focus:border-indigo-500/40 select-text"
+                    placeholder="# Study Notes..."
+                  />
+                  <div className="text-[10px] text-slate-400 font-mono text-right">
+                    Draft preserves locally during current browser session.
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </main>
+
+          <section 
+            className={`fixed bottom-0 right-0 sm:right-6 z-40 w-full sm:w-96 bg-white border border-slate-200 rounded-t-xl shadow-2xl flex flex-col justify-between transition-all duration-300 ease-in-out overflow-hidden ${
+              isChatOpen ? 'h-[580px] max-h-[85vh]' : 'h-12 cursor-pointer hover:bg-slate-50/80'
+            }`}
+            onClick={() => { if(!isChatOpen) setIsChatOpen(true); }}
+          >
+            <div className="px-5 h-12 border-b border-slate-200 flex items-center justify-between shrink-0 select-none bg-slate-50/80">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2 w-2">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isChatOpen ? 'bg-indigo-400' : 'bg-amber-400'}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${isChatOpen ? 'bg-indigo-600' : 'bg-amber-500'}`}></span>
+                </span>
+                <h2 className="text-xs font-bold text-slate-800 tracking-wide uppercase font-mono">EPST LLM</h2>
+                {!isChatOpen && (
+                  <span className="text-[10px] font-mono text-slate-500 animate-pulse ml-2 font-semibold">(Click to Expand)</span>
+                )}
+              </div>
+              
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation(); 
+                  setIsChatOpen(!isChatOpen);
+                }}
+                className="p-1 rounded hover:bg-slate-200 transition text-slate-500 hover:text-slate-800"
+                title={isChatOpen ? "Minimize Chat Panel" : "Expand Chat Panel"}
+              >
+                {isChatOpen ? <Icons.ChevronDown /> : <Icons.ChevronUp />}
+              </button>
+            </div>
+
+            {isChatOpen && (
+              <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/40">
+                <div className="px-4 py-2 border-b border-slate-200 bg-white flex items-center justify-between select-none shrink-0">
+                  <span className="text-[9px] font-mono text-slate-400 uppercase font-bold">CONTEXT LAYER SCOPE:</span>
+                  <div className="flex bg-slate-100 rounded border border-slate-200 p-0.5">
+                    <button
+                      onClick={() => setChatScope("page")}
+                      className={`px-2.5 py-0.5 text-[9px] font-mono rounded font-medium transition ${
+                        chatScope === "page" ? "bg-white text-indigo-700 shadow-sm font-semibold" : "text-slate-500 hover:text-slate-800"
+                      }`}
+                      title="Ref EPST LLM's search exclusively to the current active PDF page"
+                    >
+                      Page Only
+                    </button>
+                    <button
+                      onClick={() => setChatScope("selected_docs")}
+                      className={`px-2.5 py-0.5 text-[9px] font-mono rounded font-medium transition ${
+                        chatScope === "selected_docs" ? "bg-white text-indigo-700 shadow-sm font-semibold" : "text-slate-500 hover:text-slate-800"
+                      }`}
+                      title="Answer questions by cross-referencing checked workspace PDFs"
+                    >
+                      Selected ({selectedDocIds.length})
+                    </button>
+                  </div>
+                </div>
+
+                <div className="px-4 py-1.5 bg-indigo-50/50 border-b border-slate-100 text-[10px] text-slate-600 font-mono flex items-center gap-1 shrink-0">
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                  {chatScope === "page" ? (
+                    <span>Active Reading Target: Page {currentPage} of "{activeDoc.name}"</span>
+                  ) : (
+                    <span>
+                      Context Target: {selectedDocIds.length === 0 ? "General knowledge agent" : `${selectedDocIds.length} checked document(s)`}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                  {messages.map((msg, i) => (
+                    <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      <div className={`max-w-[85%] rounded-lg px-4 py-3 text-xs leading-relaxed ${
+                        msg.role === 'user' 
+                          ? 'bg-indigo-600 text-white rounded-br-none shadow-sm' 
+                          : msg.isError 
+                            ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                            : 'bg-white text-slate-700 border border-slate-200 shadow-sm rounded-bl-none'
+                      }`}>
+                        <p className="whitespace-pre-line select-text font-normal">{msg.text}</p>
+                      </div>
+                      <span className="text-[9px] text-slate-400 mt-1 font-mono font-semibold">{msg.timestamp}</span>
+                    </div>
+                  ))}
+                  {isGenerating && (
+                    <div className="flex flex-col items-start">
+                      <div className="bg-white border border-slate-200 shadow-sm rounded-lg rounded-bl-none px-4 py-3 text-xs flex items-center gap-2">
+                        <Icons.Spinner />
+                        <span className="text-slate-500 font-mono text-[10px]">EPST LLM is processing agentic routing...</span>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatBottomRef} />
+                </div>
+
+                <div className="px-4 py-2 border-t border-slate-200 bg-white flex gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-none shrink-0">
+                  <button
+                    onClick={() => setInputValue("Summarize the checked scientific paradigms.")}
+                    className="px-2.5 py-1 text-[10px] bg-slate-50 text-slate-600 rounded hover:bg-slate-100 hover:text-slate-800 transition border border-slate-200 font-semibold"
+                  >
+                    Summarize checked
+                  </button>
+                  <button
+                    onClick={() => setInputValue("Can you explain how a machine learning Transformer works in general terms?")}
+                    className="px-2.5 py-1 text-[10px] bg-slate-50 text-slate-600 rounded hover:bg-slate-100 hover:text-slate-800 transition border border-slate-200 font-semibold"
+                  >
+                    Ask general query
+                  </button>
+                  <button
+                    onClick={() => setInputValue("What are the key differences between Hooke's Law and Coulomb's Law?")}
+                    className="px-2.5 py-1 text-[10px] bg-slate-50 text-slate-600 rounded hover:bg-slate-100 hover:text-slate-800 transition border border-slate-200 font-semibold"
+                  >
+                    General physics
+                  </button>
+                </div>
+
+                <div className="p-4 border-t border-slate-200 bg-white shrink-0">
+                  <div className="relative flex items-center bg-slate-50 rounded-lg border border-slate-200 p-1">
+                    <textarea
+                      rows="1"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }}
+                      placeholder="Ask EPST LLM a grounded or generic query..."
+                      className="flex-1 bg-transparent text-xs text-slate-800 placeholder-slate-400 py-2.5 pl-3 pr-10 focus:outline-none resize-none max-h-24 select-text font-normal"
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={isGenerating || !inputValue.trim()}
+                      className="absolute right-2 p-1.5 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 text-white disabled:text-slate-400 transition-colors shadow-sm"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="text-[9px] text-slate-400 text-center mt-2 font-mono">
+                    EPST LLM answers document queries or general questions dynamically.
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+        </div>
+      );
+    }
+
+    const rootElement = document.getElementById("root");
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+  </script>
+</body>
+</html>
